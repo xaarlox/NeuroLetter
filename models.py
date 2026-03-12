@@ -8,7 +8,7 @@ class BaseNeuralNetwork(ABC):
         self.layer_sizes = layer_sizes
         self.num_layers = len(layer_sizes)
         self.loss_func = loss_func.lower()  # Функція похибки: mse (mean squared error) | bce (binary cross entropy)
-        self.optimizer = optimizer.lower()  # Алгоритм оптимізації: sgd (stochastic gradient descent) | adam
+        self.optimizer = optimizer.lower()  # Алгоритм оптимізації: sgd (stochastic gradient descent) | rmsprop | adam
         np.random.seed(42)
 
         self.weights = [np.random.randn(layer_sizes[i], layer_sizes[i + 1]) * 0.1
@@ -123,15 +123,18 @@ class BaseNeuralNetwork(ABC):
         elif self.optimizer == "adam":
             self.t += 1
             b1, b2 = 0.9, 0.999
-            # Для ваг
+
+            # Накопичення інерції (Momentum)
             self.m_w[i] = b1 * self.m_w[i] + (1 - b1) * dw
+            # Накопичення квадратів градієнтів
             self.v_w[i] = b2 * self.v_w[i] + (1 - b2) * (dw ** 2)
-            # Корекція зміщення
+            # Корекція зміщення (компенсація нульового старту)
             m_hat = self.m_w[i] / (1 - b1 ** self.t)
             v_hat = self.v_w[i] / (1 - b2 ** self.t)
             # Фінальні ваги
             self.weights[i] -= lr * m_hat / (np.sqrt(v_hat) + eps)
-            # Для зсувів
+
+            # Зміщення (Biases)
             self.m_b[i] = b1 * self.m_b[i] + (1 - b1) * db
             self.v_b[i] = b2 * self.v_b[i] + (1 - b2) * (db ** 2)
             # Корекція зміщення
